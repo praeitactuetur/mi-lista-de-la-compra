@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lista de la Compra</title>
+    <style>
+        /* Fondo de supermercado difuminado */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('https://www.example.com/supermercado.jpg'); /* Reemplaza con tu imagen */
+            background-size: cover;
+            background-position: center;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Contenedor principal */
+        #app {
+            width: 90%;
+            max-width: 400px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        /* Estilos para entrada y botones */
+        #itemInput, button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        /* Botón de agregar */
+        #addButton {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        #addButton:hover {
+            background-color: #218838;
+        }
+
+        /* Lista de artículos */
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 15px;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        /* Estilo de artículo comprado */
+        .bought {
+            text-decoration: line-through;
+            color: grey;
+        }
+
+        .button {
+            padding: 8px;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .toggle { background-color: #ffc107; color: white; }
+        .toggle:hover { background-color: #e0a800; }
+        
+        .delete { background-color: #dc3545; color: white; }
+        .delete:hover { background-color: #c82333; }
+
+        /* Scroll personalizado para móviles */
+        ul::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        ul::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 10px;
+        }
+    </style>
+    <!-- Firebase App -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <!-- Firebase Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h2>Lista de la Compra</h2>
+        <input type="text" id="itemInput" placeholder="Añadir artículo...">
+        <button id="addButton">Añadir a la lista</button>
+        <ul id="shoppingList"></ul>
+    </div>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAr-t7HI2o9Ty-Bj4lprXOp0RVRQaMW3qg",
+            authDomain: "lista-de-la-compra-6fbd5.firebaseapp.com",
+            databaseURL: "https://lista-de-la-compra-6fbd5-default-rtdb.firebaseio.com",
+            projectId: "lista-de-la-compra-6fbd5",
+            storageBucket: "lista-de-la-compra-6fbd5.appspot.com",
+            messagingSenderId: "427885773780",
+            appId: "1:427885773780:web:fe080ad539f1d735854c41",
+            measurementId: "G-BGYH085F18"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        const db = firebase.database().ref("shoppingList");
+
+        // Función para agregar artículo
+        document.getElementById("addButton").addEventListener("click", () => {
+            const itemInput = document.getElementById("itemInput");
+            const itemName = itemInput.value.trim();
+            if (itemName) {
+                db.push({ name: itemName, bought: false });
+                itemInput.value = "";
+            }
+        });
+
+        // Renderizar lista en tiempo real
+        db.on("value", (snapshot) => {
+            const shoppingList = document.getElementById("shoppingList");
+            shoppingList.innerHTML = "";  // Limpiar lista antes de renderizar
+            snapshot.forEach((childSnapshot) => {
+                const item = childSnapshot.val();
+                const itemId = childSnapshot.key;
+
+                const li = document.createElement("li");
+                li.className = item.bought ? "bought" : "";
+
+                // Texto del artículo
+                const itemName = document.createElement("span");
+                itemName.textContent = item.name;
+                li.appendChild(itemName);
+
+                // Contenedor de botones
+                const buttons = document.createElement("div");
+
+                // Botón de marcar/desmarcar como comprado
+                const toggleButton = document.createElement("button");
+                toggleButton.className = "button toggle";
+                toggleButton.textContent = item.bought ? "Desmarcar" : "Comprado";
+                toggleButton.addEventListener("click", () => {
+                    db.child(itemId).update({ bought: !item.bought });
+                });
+                buttons.appendChild(toggleButton);
+
+                // Botón de eliminar
+                const deleteButton = document.createElement("button");
+                deleteButton.className = "button delete";
+                deleteButton.textContent = "Eliminar";
+                deleteButton.addEventListener("click", () => {
+                    db.child(itemId).remove();
+                });
+                buttons.appendChild(deleteButton);
+
+                li.appendChild(buttons);
+                shoppingList.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>
+
+
